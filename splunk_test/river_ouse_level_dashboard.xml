@@ -1,0 +1,99 @@
+<form theme="dark">
+  <label>River Ouse Level Dashboard</label>
+  <search id="base_query">
+    <query>index="ap-test" host="247f2edf11b3" sourcetype="ap_test.csv" source="/opt/splunk/river-levels.csv"
+| rename river AS River
+| rename recorder AS Recorder
+| rename _time as Time
+| fieldformat Time = strftime(Time, "%m/%d/%Y %H:%M:%S")</query>
+    <earliest>$Time.earliest$</earliest>
+    <latest>$Time.latest$</latest>
+  </search>
+  <fieldset submitButton="false">
+    <input type="time" token="Time">
+      <label>Time_Window</label>
+      <default>
+        <earliest>-1y@y</earliest>
+        <latest>@y</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <single>
+        <title>Maximum_Level</title>
+        <search base="base_query">
+          <query>| eventstats max(max_level) as MaxLevel | where max_level=MaxLevel | table MaxLevel</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">50</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Minimum_Level</title>
+        <search base="base_query">
+          <query>| eventstats min(min_level) as MinLevel | where min_level=MinLevel | table MinLevel</query>
+          <earliest>$Time.earliest$</earliest>
+          <latest>$Time.latest$</latest>
+        </search>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xf1813f","0x006d9c","0xdc4e41"]</option>
+        <option name="rangeValues">[-10,70,100,200]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Average Level Recorder Wise</title>
+        <search base="base_query">
+          <query>| chart first(avg_level) by date, Recorder</query>
+          <earliest>$Time.earliest$</earliest>
+          <latest>$Time.latest$</latest>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">-45</option>
+        <option name="charting.axisY.abbreviation">auto</option>
+        <option name="charting.axisY.scale">log</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">connect</option>
+        <option name="charting.chart.overlayFields">foss-barrier,skelton,viking</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisEnd</option>
+        <option name="charting.legend.mode">seriesCompare</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Recorder Data Point Share</title>
+        <search base="base_query">
+          <query>| stats count(max_level), count(min_level), count(avg_level) by Recorder</query>
+        </search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+    <panel>
+      <table>
+        <title>Recorder Data Points Count</title>
+        <search base="base_query">
+          <query>| stats count(max_level), count(min_level), count(avg_level) by Recorder</query>
+        </search>
+      </table>
+    </panel>
+  </row>
+</form>
